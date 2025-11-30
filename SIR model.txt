@@ -1,0 +1,271 @@
+import numpy as np
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+from scipy.integrate import solve_ivp
+
+
+class SIRModel:
+    def __init__(self, beta, gamma, N, I0=1, days=100):
+        """
+        Инициализация модели SIR
+
+        Параметры:
+        beta: коэффициент заражения
+        gamma: коэффициент выздоровления
+        N: общая численность населения
+        I0: начальное количество зараженных
+        days: количество дней для моделирования
+        """
+        self.beta = beta
+        self.gamma = gamma
+        self.N = N
+        self.I0 = I0
+        self.days = days
+        self.R0 = beta / gamma  # Базовое репродуктивное число
+
+    def sir_equations(self, t, y):
+        """ Система дифференциальных уравнений SIR """
+        S, I, R = y
+        dSdt = -self.beta * I * S / self.N
+        dIdt = self.beta * I * S / self.N - self.gamma * I
+        dRdt = self.gamma * I
+        return [dSdt, dIdt, dRdt]
+
+    def solve_ode(self):
+        """ Решение системы ОДУ """
+        S0 = self.N - self.I0
+        R0 = 0
+        y0 = [S0, self.I0, R0]
+
+        # Временной диапазон
+        t_span = (0, self.days) # диапозон интегрирования (от нуля до того количества дней, которое дано в классе)
+        t_eval = np.linspace(0, self.days, self.days)
+
+        # Решение системы
+        solution = solve_ivp(self.sir_equations, t_span, y0,
+                             t_eval=t_eval, method='RK45')
+
+        self.time = solution.t
+        self.S = solution.y[0]
+        self.I = solution.y[1]
+        self.R = solution.y[2]
+
+        return self.time, self.S, self.I, self.R
+
+    def calculate_epidemic_metrics(self):
+        """Расчет ключевых метрик эпидемии"""
+        self.peak_infected = np.max(self.I)
+        self.peak_time = self.time[np.argmax(self.I)]
+        self.final_recovered = self.R[-1]
+        self.final_susceptible = self.S[-1]
+        self.attack_rate = (self.final_recovered / self.N) * 100
+
+    def create_visualization(self):
+        """ Визуализация """
+        self.solve_ode()
+        self.calculate_epidemic_metrics()
+
+        fig = make_subplots(
+            rows=2, cols=1,
+            subplot_titles=(
+                'Динамика эпидемии SIR',
+                'Фазовая плоскость S-I'
+            ),
+            vertical_spacing=0.3
+        )
+
+        # График зависимости S I R от времени
+        fig.add_trace(
+            go.Scatter(x=self.time, y=self.S, name='Восприимчивые (S)',
+                       line=dict(color='blue', width=3),
+                       hovertemplate='День: %{x}<br>S: %{y:.0f}<extra></extra>'),
+            row=1, col=1
+        )
+        fig.add_trace(
+            go.Scatter(x=self.time, y=self.I, name='Зараженные (I)',
+                       line=dict(color='red', width=3),
+                       hovertemplate='День: %{x}<br>I: %{y:.0f}<extra></extra>'),
+            row=1, col=1
+        )
+        fig.add_trace(
+            go.Scatter(x=self.time, y=self.R, name='Выздоровевшие (R)',
+                       line=dict(color='green', width=3),
+                       hovertemplate='День: %{x}<br>R: %{y:.0f}<extra></extra>'),
+            row=1, col=1
+        )
+
+        # пик эпидемии
+        fig.add_trace(
+            go.Scatter(x=[self.peak_time], y=[self.peak_infected],
+                       mode='markers', name='Пик эпидемии',
+                       marker=dict(color='red', size=12, symbol='star'),
+                       hovertemplate=f'Пик: {self.peak_infected:.0f} чел.<br>День: {self.peak_time:.1f}<extra></extra>'),
+            row=1, col=1
+        )
+
+        # фазовая плоскость S-I
+        fig.add_trace(
+            go.Scatter(x=self.S, y=self.I, name='Фазовая траектория',
+                       line=dict(color='purple', width=3),
+                       hovertemplate='S: %{x:.0f}<br>I: %{y:.0f}<extra></extra>'),
+            row=2, col=1
+        )
+
+        # начальная и конечная точка на фазовой плоскости
+        fig.add_trace(
+            go.Scatter(x=[self.S[0], self.S[-1]], y=[self.I[0], self.I[-1]],
+                       mode='markers', name='Ключевые точки',
+                       marker=dict(size=10, color=['orange', 'brown']),
+                       hovertemplate='S: %{x:.0f}<br>I: %{y:.0f}<extra></extra>'),
+            row=2, col=1
+        )
+
+
+        # Обновляем layout
+        fig.update_layout(
+            title=f'Модель SIR для эпидемии (R₀ = {self.R0:.2f})',
+            height=700,
+            showlegend=True,
+            template='plotly_white',
+            hovermode='x unified'
+        )
+
+        # Обновляем оси
+        fig.update_xaxes(title_text='Время (дни)', row=1, col=1)
+        fig.update_yaxes(title_text='Численность', row=1, col=1)
+        fig.update_xaxes(title_text='Восприимчивые (S)', row=2, col=1)
+        fig.update_yaxes(title_text='Зараженные (I)', row=2, col=1)
+
+        # Создаем отдельную фигуру для таблицы с параметрами
+        table_fig = self.create_parameters_table()
+
+        return fig, table_fig
+
+    def create_parameters_table(self):
+        """ таблица с параметрами """
+        parameters_table = go.Table(
+            header=dict(
+                values=['Параметр', 'Значение', 'Описание'],
+                fill_color='lightblue',
+                align='left',
+                font=dict(size=15, color='black')
+            ),
+            cells=dict(
+                values=[
+                    [
+                        'β ',
+                        'γ ',
+                        'R₀ ',
+                        'N ',
+                        'Пик зараженных',
+                        'Время пика (дни)',
+                        'Всего переболело',
+                        'Финальное S',
+                        'Атака (%)'
+                    ],
+                    [
+                        f'{self.beta:.3f}',
+                        f'{self.gamma:.3f}',
+                        f'{self.R0:.3f}',
+                        f'{self.N:,}',
+                        f'{self.peak_infected:.0f}',
+                        f'{self.peak_time:.1f}',
+                        f'{self.final_recovered:.0f}',
+                        f'{self.final_susceptible:.0f}',
+                        f'{self.attack_rate:.1f}%'
+                    ],
+                    [
+                        'Скорость заражения',
+                        'Скорость выздоровления',
+                        'Среднее число заражений от одного больного',
+                        'Общая численность населения',
+                        'Максимальное число одновременно зараженных',
+                        'Время достижения пика эпидемии',
+                        'Общее число переболевших',
+                        'Люди, которые никогда не болели',
+                        'Процент населения, который переболел'
+                    ]
+                ],
+                align='left',
+                font=dict(size=15),
+                height=30
+            )
+        )
+
+        table_fig = go.Figure(data=[parameters_table])
+        table_fig.update_layout(
+            title='Параметры модели и результаты',
+            height=600,
+            margin=dict(l=15, r=15, t=60, b=10)
+        )
+
+        return table_fig
+
+
+def run_sir_simulation():
+    # Параметры модели
+    beta = 0.3                # скорость заражения
+    gamma = 0.1               # скорость выздоровления
+    N = 1000                  # общая численность населения
+    I0 = 5                    # начальное количество зараженных
+    days = 160                # длительность моделирования
+
+    # Создаем и запускаем модель
+    model = SIRModel(beta=beta, gamma=gamma, N=N, I0=I0, days=days)
+
+    # Создаем визуализацию
+    fig, table_fig = model.create_visualization()
+
+    # Показываем графики
+    fig.show()
+    table_fig.show()
+
+    return model
+
+
+# Функция для сравнения разных сценариев
+def compare_scenarios():
+    """
+    Сравнение разных сценариев эпидемии
+    """
+    scenarios = [
+        {'beta': 0.2, 'gamma': 0.1, 'color': 'blue', 'name': 'R₀ = 2.0'},
+        {'beta': 0.3, 'gamma': 0.1, 'color': 'red', 'name': 'R₀ = 3.0'},
+        {'beta': 0.4, 'gamma': 0.1, 'color': 'green', 'name': 'R₀ = 4.0'},
+        {'beta': 0.3, 'gamma': 0.15, 'color': 'orange', 'name': 'R₀ = 2.0 (высокое γ)'}
+    ]
+
+    fig = go.Figure()
+
+    for scenario in scenarios:
+        model = SIRModel(beta=scenario['beta'], gamma=scenario['gamma'],
+                         N=1000, I0=5, days=160)
+        model.solve_ode()
+
+        fig.add_trace(go.Scatter(
+            x=model.time, y=model.I,
+            name=scenario['name'],
+            line=dict(color=scenario['color'], width=3),
+            hovertemplate='День: %{x}<br>Зараженные: %{y:.0f}<extra></extra>'
+        ))
+
+    fig.update_layout(
+        title='Сравнение динамики зараженных для разных параметров',
+        xaxis_title='Время (дни)',
+        yaxis_title='Зараженные (I)',
+        template='plotly_white',
+        height=500
+    )
+
+    fig.show()
+
+
+if __name__ == "__main__":
+    print("Запуск детерминированной модели SIR...")
+    print("Параметры по умолчанию: β = 0.3, γ = 0.1, R₀ = 3.0, N = 1000")
+
+    # Запускаем основную симуляцию
+    model = run_sir_simulation()
+
+    # Запускаем сравнение сценариев
+    compare_scenarios()

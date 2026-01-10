@@ -1,4 +1,5 @@
 
 хороший привер введения
 https://api.dspace.spbu.ru/server/api/core/bitstreams/6b43eba2-c70e-480e-a7a9-55985e041f5e/content
+Жумартова Б. О., Ысмагул Р. С. ПРИМЕНЕНИЕ SIR МОДЕЛИ В МОДЕЛИРОВАНИИ ЭПИДЕМИЙ // Международный журнал гуманитарных и естественных наук. 2021. №12-2. URL: https://cyberleninka.ru/article/n/primenenie-sir-modeli-v-modelirovanii-epidemiy (дата обращения: 30.11.2025).
 

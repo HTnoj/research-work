@@ -61,7 +61,6 @@ class SIRModel:
         self.attack_rate = (self.final_recovered / self.N) * 100
 
     def create_visualization(self):
-        """ Визуализация """
         self.solve_ode()
         self.calculate_epidemic_metrics()
 
@@ -121,7 +120,7 @@ class SIRModel:
         )
 
 
-        # Обновляем layout
+
         fig.update_layout(
             title=f'Модель SIR для эпидемии (R₀ = {self.R0:.2f})',
             height=700,
@@ -130,13 +129,13 @@ class SIRModel:
             hovermode='x unified'
         )
 
-        # Обновляем оси
+
         fig.update_xaxes(title_text='Время (дни)', row=1, col=1)
         fig.update_yaxes(title_text='Численность', row=1, col=1)
         fig.update_xaxes(title_text='Восприимчивые (S)', row=2, col=1)
         fig.update_yaxes(title_text='Зараженные (I)', row=2, col=1)
 
-        # Создаем отдельную фигуру для таблицы с параметрами
+
         table_fig = self.create_parameters_table()
 
         return fig, table_fig
@@ -203,27 +202,27 @@ class SIRModel:
 
 
 def run_sir_simulation():
-    # Параметры модели
+
     beta = 0.3                # скорость заражения
     gamma = 0.1               # скорость выздоровления
     N = 1000                  # общая численность населения
     I0 = 5                    # начальное количество зараженных
     days = 160                # длительность моделирования
 
-    # Создаем и запускаем модель
+
     model = SIRModel(beta=beta, gamma=gamma, N=N, I0=I0, days=days)
 
-    # Создаем визуализацию
+
     fig, table_fig = model.create_visualization()
 
-    # Показываем графики
+
     fig.show()
     table_fig.show()
 
     return model
 
 
-# Функция для сравнения разных сценариев
+
 def compare_scenarios():
     """
     Сравнение разных сценариев эпидемии
@@ -264,8 +263,8 @@ if __name__ == "__main__":
     print("Запуск детерминированной модели SIR...")
     print("Параметры по умолчанию: β = 0.3, γ = 0.1, R₀ = 3.0, N = 1000")
 
-    # Запускаем основную симуляцию
+
     model = run_sir_simulation()
 
-    # Запускаем сравнение сценариев
+
     compare_scenarios()

@@ -70,25 +70,26 @@ class SIRModel:
                 'Динамика эпидемии SIR',
                 'Фазовая плоскость S-I'
             ),
-            vertical_spacing=0.3
+            vertical_spacing=0.2,
+            row_heights=[0.5, 0.5]
         )
 
         # График зависимости S I R от времени
         fig.add_trace(
             go.Scatter(x=self.time, y=self.S, name='Восприимчивые (S)',
-                       line=dict(color='blue', width=3),
+                       line=dict(color='blue', width=5),
                        hovertemplate='День: %{x}<br>S: %{y:.0f}<extra></extra>'),
             row=1, col=1
         )
         fig.add_trace(
             go.Scatter(x=self.time, y=self.I, name='Зараженные (I)',
-                       line=dict(color='red', width=3),
+                       line=dict(color='red', width=6),
                        hovertemplate='День: %{x}<br>I: %{y:.0f}<extra></extra>'),
             row=1, col=1
         )
         fig.add_trace(
             go.Scatter(x=self.time, y=self.R, name='Выздоровевшие (R)',
-                       line=dict(color='green', width=3),
+                       line=dict(color='green', width=6),
                        hovertemplate='День: %{x}<br>R: %{y:.0f}<extra></extra>'),
             row=1, col=1
         )
@@ -97,7 +98,7 @@ class SIRModel:
         fig.add_trace(
             go.Scatter(x=[self.peak_time], y=[self.peak_infected],
                        mode='markers', name='Пик эпидемии',
-                       marker=dict(color='red', size=12, symbol='star'),
+                       marker=dict(color='red', size=20, symbol='star'),
                        hovertemplate=f'Пик: {self.peak_infected:.0f} чел.<br>День: {self.peak_time:.1f}<extra></extra>'),
             row=1, col=1
         )
@@ -105,7 +106,7 @@ class SIRModel:
         # фазовая плоскость S-I
         fig.add_trace(
             go.Scatter(x=self.S, y=self.I, name='Фазовая траектория',
-                       line=dict(color='purple', width=3),
+                       line=dict(color='purple', width=6),
                        hovertemplate='S: %{x:.0f}<br>I: %{y:.0f}<extra></extra>'),
             row=2, col=1
         )
@@ -114,7 +115,7 @@ class SIRModel:
         fig.add_trace(
             go.Scatter(x=[self.S[0], self.S[-1]], y=[self.I[0], self.I[-1]],
                        mode='markers', name='Ключевые точки',
-                       marker=dict(size=10, color=['orange', 'brown']),
+                       marker=dict(size=15, color=['orange', 'brown']),
                        hovertemplate='S: %{x:.0f}<br>I: %{y:.0f}<extra></extra>'),
             row=2, col=1
         )
@@ -122,20 +123,47 @@ class SIRModel:
 
 
         fig.update_layout(
-            title=f'Модель SIR для эпидемии (R₀ = {self.R0:.2f})',
-            height=700,
+            title=dict(
+                text=f'Модель SIR для эпидемии (R₀ = {self.R0:.2f})',
+                font=dict(size=33, family="Arial Bold")
+            ),
+            height=1000,
             showlegend=True,
             template='plotly_white',
-            hovermode='x unified'
+            hovermode='x unified',
+            legend=dict(
+                font=dict(size=22),
+                x=1.02,
+                y=1
+            )
+
+        )
+        fig.update_xaxes(
+            title_text='Время (дни)',
+            title_font=dict(size=25),
+            tickfont=dict(size=23),
+            row=1, col=1
+        )
+        fig.update_yaxes(
+            title_text='Численность',
+            title_font=dict(size=25),
+            tickfont=dict(size=23),
+            row=1, col=1
+        )
+        fig.update_xaxes(
+            title_text='Восприимчивые (S)',
+            title_font=dict(size=25),
+            tickfont=dict(size=23),
+            row=2, col=1
+        )
+        fig.update_yaxes(
+            title_text='Зараженные (I)',
+            title_font=dict(size=25),
+            tickfont=dict(size=23),
+            row=2, col=1
         )
 
-
-        fig.update_xaxes(title_text='Время (дни)', row=1, col=1)
-        fig.update_yaxes(title_text='Численность', row=1, col=1)
-        fig.update_xaxes(title_text='Восприимчивые (S)', row=2, col=1)
-        fig.update_yaxes(title_text='Зараженные (I)', row=2, col=1)
-
-
+        fig.update_annotations(font=dict(size=24))
         table_fig = self.create_parameters_table()
 
         return fig, table_fig
@@ -147,7 +175,8 @@ class SIRModel:
                 values=['Параметр', 'Значение', 'Описание'],
                 fill_color='lightblue',
                 align='left',
-                font=dict(size=15, color='black')
+                font=dict(size=20, color='black'),
+                height = 40
             ),
             cells=dict(
                 values=[
@@ -186,16 +215,17 @@ class SIRModel:
                     ]
                 ],
                 align='left',
-                font=dict(size=15),
-                height=30
+                font=dict(size=20),
+                height=35
             )
         )
 
         table_fig = go.Figure(data=[parameters_table])
         table_fig.update_layout(
             title='Параметры модели и результаты',
+            font=dict(size=28),
             height=600,
-            margin=dict(l=15, r=15, t=60, b=10)
+            margin=dict(l=20, r=20, t=70, b=20)
         )
 
         return table_fig
@@ -244,17 +274,34 @@ def compare_scenarios():
         fig.add_trace(go.Scatter(
             x=model.time, y=model.I,
             name=scenario['name'],
-            line=dict(color=scenario['color'], width=3),
+            line=dict(color=scenario['color'], width=6),
             hovertemplate='День: %{x}<br>Зараженные: %{y:.0f}<extra></extra>'
         ))
 
     fig.update_layout(
-        title='Сравнение динамики зараженных для разных параметров',
-        xaxis_title='Время (дни)',
-        yaxis_title='Зараженные (I)',
+        title=dict(
+            text='Сравнение динамики зараженных для разных параметров',
+            font=dict(size=33, family="Arial Bold")
+        ),
+        xaxis_title=dict(
+            text='Время (дни)',
+            font=dict(size=25)
+        ),
+        yaxis_title=dict(
+            text='Зараженные (I)',
+            font=dict(size=25)
+        ),
         template='plotly_white',
-        height=500
+        height=600,
+        legend=dict(
+            font=dict(size=21),
+            x=1.02,
+            y=1
+        )
     )
+
+    fig.update_xaxes(tickfont=dict(size=23))
+    fig.update_yaxes(tickfont=dict(size=23))
 
     fig.show()
 

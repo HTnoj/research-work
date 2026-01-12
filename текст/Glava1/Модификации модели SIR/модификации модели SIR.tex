@@ -1,0 +1,123 @@
+\section{МОДИФИКАЦИИ МОДЕЛИ SIR}
+Помимо классической SIR-модели существует множество модификаций \cite{second,third}, каждая из которых подходит для моделирования отдельного класса инфекций. Был проделан краткий обзор основых модификаций. 
+
+\subsection{Модель SEIR: учет инкубационного периода}
+
+Модель SEIR вводит дополнительную группу \textbf{E (Exposed)} -- заражённые, находящиеся в инкубационном периоде, которые ещё не способны передавать инфекцию.
+
+\subsubsection{Схема переходов}
+\[
+S \xrightarrow{\beta \frac{S I}{N}} E \xrightarrow{\sigma} I \xrightarrow{\gamma} R
+\]
+
+\subsubsection{Система уравнений}
+$$
+\left\{
+    \begin{array}{lll}
+        \displaystyle \frac{dS}{dt} &= \displaystyle -\frac{\beta \cdot I \cdot S}{N}, & \\
+        \displaystyle \frac{dE}{dt} &= \displaystyle \frac{\beta \cdot I \cdot S}{N} - \sigma \cdot E, & \\
+        \displaystyle \frac{dI}{dt} &= \displaystyle \sigma \cdot E - \gamma \cdot I, & \\
+        \displaystyle \frac{dR}{dt} &= \displaystyle \gamma \cdot I, &
+    \end{array}
+\right.
+$$
+
+\subsubsection{Новые параметры}
+\begin{itemize}
+    \item $\sigma$ -- интенсивность перехода из состояния \textit{Exposed} в состояние \textit{Infectious}.
+    \item $\frac{1}{\sigma}$ -- средняя длительность инкубационного периода.
+\end{itemize}
+
+\subsubsection{Ключевое отличие}
+Модель адекватно описывает болезни с существенным латентным периодом (корь, COVID-19, Эбола). Введение компартмента $E$ приводит к задержке пика эпидемии по сравнению с классической SIR при прочих равных параметрах, что критически важно для оценки эффективности карантинных мер и отслеживания контактов.
+
+\subsection{Модель SIRS: временный иммунитет}
+
+Модель SIRS учитывает постепенную потерю иммунитета после перенесённого заболевания, что возвращает индивидов обратно в класс восприимчивых.
+
+\subsubsection{Схема переходов}
+\[
+S \xrightarrow{\beta \frac{S I}{N}} I \xrightarrow{\gamma} R \xrightarrow{\xi} S
+\]
+
+\subsubsection{Система уравнений}
+$$
+\left\{
+    \begin{array}{lll}
+        \displaystyle \frac{dS}{dt} &= \displaystyle -\frac{\beta \cdot I \cdot S}{N} + \xi \cdot R, & \\
+        \displaystyle \frac{dI}{dt} &= \displaystyle \frac{\beta \cdot I \cdot S}{N} - \gamma \cdot I, & \\
+        \displaystyle \frac{dR}{dt} &= \displaystyle \gamma \cdot I - \xi \cdot R, &
+    \end{array}
+\right.
+$$
+
+\subsubsection{Новые параметры}
+\begin{itemize}
+    \item $\xi$ -- интенсивность потери иммунитета.
+    \item $\frac{1}{\xi}$ -- средняя длительность иммунитета.
+\end{itemize}
+
+\subsubsection{Ключевое отличие}
+Модель позволяет описывать болезни, к которым не формируется стойкий пожизненный иммунитет (грипп, некоторые риновирусы). В отличие от SIR, где эпидемия всегда затухает, модель SIRS может демонстрировать:
+\begin{enumerate}
+    \item \textbf{Демпфирующиеся колебания} с переходом в эндемическое равновесие.
+    \item \textbf{Устойчивые периодические колебания} (эпидемические циклы) при определённых соотношениях параметров.
+\end{enumerate}
+Эндемическое равновесие ($I^* > 0$) достигается при $S^* = \frac{\gamma}{\beta}$, а $I^* = \frac{\xi (N - S^*)}{\gamma + \xi}$.
+
+\subsection{Модель SIR с носителями (Carriers)}
+
+Для болезней, при которых часть переболевших становится хроническими \textbf{носителями} (выделяют патоген, но не имеют симптомов), используется модель SIRC или её вариации. Примеры: брюшной тиф, гепатит B, менингококковая инфекция.
+
+\subsubsection{Схема переходов (вариант 1)}
+В этом варианте носители $C$ образуются из выздоровевших $R$ и сами могут заражать восприимчивых.
+\[
+S \xrightarrow{\beta \frac{S (I + \epsilon C)}{N}} I \xrightarrow{\gamma} R \xrightarrow{\eta} C \xrightarrow{\omega} S
+\]
+\vspace{-3mm}
+
+$$
+\left\{
+    \begin{array}{lll}
+        \displaystyle \frac{dS}{dt} &= -\beta \frac{S (I + \epsilon C)}{N} + \omega C, & \\
+        \displaystyle \frac{dI}{dt} &= \beta \frac{S (I + \epsilon C)}{N} - \gamma I, & \\
+        \displaystyle \frac{dR}{dt} &= \gamma I - \eta R, & \\
+        \displaystyle \frac{dC}{dt} &= \eta R - \omega C. &
+    \end{array}
+\right.
+$$
+
+\subsubsection{Схема переходов (вариант 2)}
+Носители образуются напрямую из класса инфекционных $I$.
+\[
+S \xrightarrow{\beta \frac{S (I + \epsilon C)}{N}} I \xrightarrow{(1-p)\gamma} R
+\]
+\[
+I \xrightarrow{p\gamma} C \xrightarrow{\omega} R
+\]
+\vspace{-3mm}
+
+$$
+\left\{
+    \begin{array}{lll}
+        \displaystyle \frac{dS}{dt} &= -\beta \frac{S (I + \epsilon C)}{N}, & \\
+        \displaystyle \frac{dI}{dt} &= \beta \frac{S (I + \epsilon C)}{N} - \gamma I, & \\
+        \displaystyle \frac{dC}{dt} &= p \gamma I - \omega C, & \\
+        \displaystyle \frac{dR}{dt} &= (1-p) \gamma I + \omega C. &
+    \end{array}
+\right.
+$$
+
+\subsubsection{Новые параметры}
+\begin{itemize}
+    \item $C(t)$ -- число носителей.
+    \item $\epsilon \in [0, 1]$ -- относительная заразность носителей по сравнению с больными в острой фазе ($I$).
+    \item $\eta$ или $p$ -- интенсивность (или доля) перехода в состояние носительства.
+    \item $\omega$ -- интенсивность выхода из состояния носительства (выздоровление или смерть).
+\end{itemize}
+
+\subsubsection{Ключевое отличие}
+Модель позволяет изучать долгосрочную динамику болезней с хроническим носительством, которое может служить резервуаром инфекции и поддерживать её циркуляцию даже в отсутствие активных случаев $I$.
+
+\vspace{2cm}
+Также были рассмотрены различные стохастические модели \cite{fourth}, которые на данный момент представляют большой интерес из-за недетерминированности.
